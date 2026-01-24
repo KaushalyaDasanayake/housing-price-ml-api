@@ -18,7 +18,7 @@ from fastapi import Request
 from pathlib import Path
 from pydantic import BaseModel, Field
 
-REDIS_URL = os.getenv("REDIS_URL")
+redis_url = os.getenv("REDIS_URL") or os.getenv("REDIS_PUBLIC_URL")
 
 app = FastAPI() #creates a fastapi app object
 
@@ -43,39 +43,33 @@ redis_client = None
 
 @app.on_event("startup")
 def load_artifacts():
-    """
-    Runs once when the FastAPI server starts.
-    Loads ML artifacts into memory so requests are fast.
-    """
     global model, scaler, redis_client
 
+    # 1) Load model + scaler
     try:
         logger.info("Loading model and scaler...")
         model = joblib.load(BASE_DIR / "model" / "model.joblib")
         scaler = joblib.load(BASE_DIR / "model" / "scaler.joblib")
         logger.info("✅ Model and scaler loaded successfully")
     except Exception as e:
-        # Keep them as None so /ready returns 503
         model = None
         scaler = None
         logger.exception(f"❌ Failed to load artifacts: {e}")
 
-        # ---- Connect to Redis ----
+    # 2) Connect to Redis
     try:
         logger.info("Connecting to Redis...")
 
-        if REDIS_URL:
-            redis_client = redis.from_url(
-                REDIS_URL,
-                decode_responses=True
-            )
+        # Railway gives REDIS_PUBLIC_URL (you already have it)
+        redis_url = os.getenv("REDIS_URL") or os.getenv("REDIS_PUBLIC_URL")
+
+        if redis_url:
+            redis_client = redis.from_url(redis_url, decode_responses=True)
         else:
-            # fallback for local development
-            redis_client = redis.Redis(
-                host="localhost",
-                port=6379,
-                decode_responses=True
-            )
+            # Local dev (optional)
+            redis_host = os.getenv("REDIS_HOST", "localhost")
+            redis_port = int(os.getenv("REDIS_PORT", 6379))
+            redis_client = redis.Redis(host=redis_host, port=redis_port, decode_responses=True)
 
         redis_client.ping()
         logger.info("✅ Connected to Redis")
