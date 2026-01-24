@@ -1,0 +1,20 @@
+# Secrets
+.env
+
+# macOS
+.DS_Store
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Local datasets / large files (if any)
+data/
+*.csv
+*.zip
+
+# Notebooks (experiments)
+notebooks/
+
+# Ignore local/old entrypoints
+app/main.py
+app/main_copy.py
