@@ -18,8 +18,7 @@ from fastapi import Request
 from pathlib import Path
 from pydantic import BaseModel, Field
 
-REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
-REDIS_PORT = int(os.getenv("REDIS_PORT", 6379))
+REDIS_URL = os.getenv("REDIS_URL")
 
 app = FastAPI() #creates a fastapi app object
 
@@ -61,21 +60,30 @@ def load_artifacts():
         scaler = None
         logger.exception(f"❌ Failed to load artifacts: {e}")
 
-    # ---- Connect to Redis ----
+        # ---- Connect to Redis ----
     try:
         logger.info("Connecting to Redis...")
-        redis_client = redis.Redis(
-            host=REDIS_HOST,
-            port=REDIS_PORT,
-            decode_responses=True
-        )
 
-        redis_client.ping()   # test connection
+        if REDIS_URL:
+            redis_client = redis.from_url(
+                REDIS_URL,
+                decode_responses=True
+            )
+        else:
+            # fallback for local development
+            redis_client = redis.Redis(
+                host="localhost",
+                port=6379,
+                decode_responses=True
+            )
+
+        redis_client.ping()
         logger.info("✅ Connected to Redis")
 
     except Exception as e:
         redis_client = None
         logger.exception(f"❌ Failed to connect to Redis: {e}")
+
 
 # startup runs once per server process
 # global allows you to assign to module-level variables
