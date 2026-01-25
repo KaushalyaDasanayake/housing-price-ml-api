@@ -33,6 +33,7 @@ import csv
 # Logs
 PRED_LOG_PATH = os.getenv("PRED_LOG_PATH", "data/predictions.csv")
 _csv_lock = Lock()
+TRAINING_STATS = None
 
 def append_prediction_log(row: dict) -> None:
     """
@@ -89,6 +90,17 @@ def load_artifacts():
         model = None
         scaler = None
         logger.exception(f"❌ Failed to load artifacts: {e}")
+
+    # ---- Load training drift baseline ----
+    global TRAINING_STATS
+    try:
+        with open(BASE_DIR / "model" / "training_stats.json") as f:
+            TRAINING_STATS = json.load(f)
+        logger.info("✅ Loaded training drift baseline stats")
+    except Exception as e:
+        TRAINING_STATS = None
+        logger.exception(f"❌ Failed to load training stats: {e}")
+
 
     # 2) Connect to Redis
     try:
@@ -452,3 +464,43 @@ def predict(data: HouseFeatures, request:Request):
     predicted_price=float(pred[0]),
     error=None
 )
+
+# compare recent prediction data vs training data
+@app.get("/drift")
+def check_drift():
+    if TRAINING_STATS is None:
+        return {"status": "no_training_baseline"}
+
+    if not os.path.exists(PRED_LOG_PATH):
+        return {"status": "no_prediction_data"}
+
+    import pandas as pd
+    df = pd.read_csv(PRED_LOG_PATH)
+
+    if len(df) < 5:
+        return {"status": "not_enough_data", "rows": len(df)}
+
+    recent = df.tail(50)  # last 50 predictions
+
+    drift_report = {}
+
+    for feature, stats in TRAINING_STATS.items():
+        train_mean = stats["mean"]
+        train_std = stats["std"]
+
+        current_mean = recent[feature].astype(float).mean()
+
+        z = abs(current_mean - train_mean) / (train_std + 1e-6)
+
+        drift_report[feature] = {
+            "train_mean": round(train_mean, 3),
+            "current_mean": round(current_mean, 3),
+            "z_score": round(z, 2),
+            "drift": bool(z > 3)
+        }
+
+    return {
+        "status": "ok",
+        "checked_rows": len(recent),
+        "features": drift_report
+    }
