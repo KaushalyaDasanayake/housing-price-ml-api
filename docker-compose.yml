@@ -7,6 +7,10 @@ services:
       - "8000:8000"
     env_file:
       - .env
+    environment:
+      - PRED_LOG_PATH=/app/data/predictions.csv
+    volumes:
+      - ./data:/app/data
     depends_on:
       - redis
     restart: unless-stopped

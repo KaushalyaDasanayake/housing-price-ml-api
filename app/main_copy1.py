@@ -18,6 +18,32 @@ from fastapi import Request
 from pathlib import Path
 from pydantic import BaseModel, Field
 
+from datetime import datetime
+import csv
+from threading import Lock
+
+# Logs
+PRED_LOG_PATH = os.getenv("PRED_LOG_PATH", "data/predictions.csv")
+_csv_lock = Lock()
+
+def append_prediction_log(row: dict) -> None:
+    """
+    Append one prediction log row to a CSV file.
+    Uses a lock to avoid race conditions when multiple requests happen.
+    """
+    fieldnames = list(row.keys())
+
+    os.makedirs(os.path.dirname(PRED_LOG_PATH), exist_ok=True)
+
+    with _csv_lock:
+        file_exists = os.path.exists(PRED_LOG_PATH) and os.path.getsize(PRED_LOG_PATH) > 0
+        with open(PRED_LOG_PATH, "a", newline="") as f:
+            writer = csv.DictWriter(f, fieldnames=fieldnames)
+            if not file_exists:
+                writer.writeheader()
+            writer.writerow(row)
+
+
 redis_url = os.getenv("REDIS_URL") or os.getenv("REDIS_PUBLIC_URL")
 
 app = FastAPI() #creates a fastapi app object
@@ -241,6 +267,7 @@ def home():
 def predict(data: HouseFeatures, request:Request):
 
     rid = request.state.request_id
+    start_time = time.time()
 
     # ✅ FIRST: check if model and scaler are ready (A guard)
     if model is None or scaler is None:
@@ -267,15 +294,28 @@ def predict(data: HouseFeatures, request:Request):
     if redis_client is not None:
         cached_value = redis_client.get(cache_key)
 
+    # ✅ Cache hit path
     if cached_value is not None:
+        latency_ms = (time.time() - start_time) * 1000
+
+        append_prediction_log({
+            "timestamp": datetime.utcnow().isoformat(),
+            "request_id": rid,
+            "model_version": MODEL_VERSION,
+            **input_dict,
+            "predicted_price": float(cached_value),
+            "cache_hit": True,
+            "latency_ms": round(latency_ms, 2),
+            "error": ""
+        })
+
         logger.info(f"[{rid}] Cache hit")
         return PredictResponse(
-        status="success",
-        model_version=MODEL_VERSION,
-        predicted_price=float(cached_value),
-        error=None
-    )
-
+            status="success",
+            model_version=MODEL_VERSION,
+            predicted_price=float(cached_value),
+            error=None
+        )
 
     # ✅ THEN: build features
 
@@ -303,7 +343,21 @@ def predict(data: HouseFeatures, request:Request):
         redis_client.setex(cache_key, 600, pred_value)
         logger.info(f"[{rid}] Cache stored")
 
-    logger.info(f"[{rid}] Prediction result | price={float(pred[0])}")
+    
+    latency_ms = (time.time() - start_time) * 1000
+
+    append_prediction_log({
+        "timestamp": datetime.utcnow().isoformat(),
+        "request_id": rid,
+        "model_version": MODEL_VERSION,
+        **input_dict,
+        "predicted_price": pred_value,
+        "cache_hit": False,
+        "latency_ms": round(latency_ms, 2),
+        "error": ""
+    })
+
+    logger.info(f"[{rid}] Prediction result | price={pred_value}")
 
     # Return structured response
     return PredictResponse(
