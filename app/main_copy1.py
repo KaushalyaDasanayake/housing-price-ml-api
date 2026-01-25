@@ -18,9 +18,17 @@ from fastapi import Request
 from pathlib import Path
 from pydantic import BaseModel, Field
 
+# logger 
 from datetime import datetime
 import csv
 from threading import Lock
+
+# log stats
+from collections import Counter
+
+# export csv
+from fastapi.responses import FileResponse
+import csv
 
 # Logs
 PRED_LOG_PATH = os.getenv("PRED_LOG_PATH", "data/predictions.csv")
@@ -261,6 +269,84 @@ def ready():
 @app.get("/")
 def home():
     return {"message": "Api is working"}
+
+# get logs
+@app.get("/logs/stats")
+def log_stats():
+    if not os.path.exists(PRED_LOG_PATH) or os.path.getsize(PRED_LOG_PATH) == 0:
+        return {"status": "no_logs_yet"}
+
+    rows = []
+    with open(PRED_LOG_PATH, "r") as f:
+        reader = csv.DictReader(f)
+        for r in reader:
+            rows.append(r)
+
+    total = len(rows)
+    hits = sum(1 for r in rows if str(r.get("cache_hit")).lower() == "true")
+
+    # latency might be empty sometimes, handle safely
+    latencies = []
+    for r in rows:
+        try:
+            latencies.append(float(r.get("latency_ms", 0)))
+        except:
+            pass
+
+    avg_latency = round(sum(latencies) / len(latencies), 2) if latencies else None
+
+    return {
+        "total_predictions": total,
+        "cache_hit_ratio": round((hits / total) * 100, 2),
+        "avg_latency_ms": avg_latency,
+        "last_5": rows[-5:]
+    }
+
+# export a clean dataset file from logs
+@app.get("/export/predictions.csv")
+def export_predictions_csv():
+    if not os.path.exists(PRED_LOG_PATH):
+        return JSONResponse(status_code=404, content={"error": "predictions log not found"})
+
+    # Return the file directly (browser downloads it)
+    return FileResponse(
+        PRED_LOG_PATH,
+        media_type="text/csv",
+        filename="predictions.csv"
+    )
+
+# clean dataset export
+@app.get("/export/dataset.csv")
+def export_dataset_csv():
+    if not os.path.exists(PRED_LOG_PATH):
+        return JSONResponse(status_code=404, content={"error": "predictions log not found"})
+
+    out_path = os.path.join(os.path.dirname(PRED_LOG_PATH), "dataset.csv")
+
+    keep_cols = [
+        "timestamp",
+        "model_version",
+        *FEATURE_ORDER,
+        "predicted_price",
+        "cache_hit",
+        "latency_ms",
+    ]
+
+    with open(PRED_LOG_PATH, "r") as fin, open(out_path, "w", newline="") as fout:
+        reader = csv.DictReader(fin)
+        writer = csv.DictWriter(fout, fieldnames=keep_cols)
+        writer.writeheader()
+
+        for r in reader:
+            if r.get("error"):          # skip errored rows
+                continue
+            if not r.get("predicted_price"):
+                continue
+
+            clean_row = {k: r.get(k, "") for k in keep_cols}
+            writer.writerow(clean_row)
+
+    return FileResponse(out_path, media_type="text/csv", filename="dataset.csv")
 
 
 @app.post("/v1/predict", response_model=PredictResponse)
