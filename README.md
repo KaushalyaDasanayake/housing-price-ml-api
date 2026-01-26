@@ -257,7 +257,128 @@ Example:
 -   Demonstrates CI/CD and cloud deployment
 -   Shows ML engineering, not just modeling
 
+
 ------------------------------------------------------------------------
+
+
+
+---
+
+##  Example API Usage
+
+###  Example Prediction Request
+
+Using **curl**:
+
+```bash
+curl -X POST "https://housing-price-ml-api-production.up.railway.app/v1/predict" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "MedInc": 8.3252,
+    "HouseAge": 41,
+    "AveRooms": 6.984127,
+    "AveBedrms": 1.02381,
+    "Population": 322,
+    "AveOccup": 2.555556,
+    "Latitude": 37.88,
+    "Longitude": -122.23,
+    "RoomsPerHousehold": 2.0,
+    "BedroomsPerHouse": 0.3,
+    "PopulationPerHousehold": 3.0
+  }'
+```
+
+✅ **Successful Response**
+
+```json
+{
+  "status": "success",
+  "model_version": "v1",
+  "predicted_price": 4.425209713467011,
+  "error": null
+}
+```
+
+---
+
+###  Example Drift Check
+
+Using **curl**:
+
+```bash
+curl -X GET "https://housing-price-ml-api-production.up.railway.app/drift"
+```
+
+✅ **Drift Report Response**
+
+```json
+{
+  "status": "ok",
+  "checked_rows": 50,
+  "features": {
+    "MedInc": {
+      "train_mean": 3.881,
+      "current_mean": 8.325,
+      "z_score": 2.33,
+      "drift": false
+    },
+    "HouseAge": {
+      "train_mean": 28.608,
+      "current_mean": 41.0,
+      "z_score": 0.98,
+      "drift": false
+    }
+  }
+}
+```
+
+---
+
+
+
+---
+
+## 🐳 Run Locally with Docker
+
+You can run the full system (**API + Redis**) locally using **Docker Compose**.
+
+### ✅ Prerequisites
+- Docker installed
+- Docker Compose installed
+
+### ▶️ Steps
+
+```bash
+git clone https://github.com/KaushalyaDasanayake/housing-price-ml-api.git
+cd housing-price-ml-api
+docker-compose up --build
+```
+
+### Access the API
+
+- **API Base URL:** http://localhost:8000  
+- **Swagger UI:** http://localhost:8000/docs
+
+Redis runs inside Docker and is automatically connected to the API container.
+
+### ⏹ Stop Services
+
+```bash
+docker-compose down
+```
+
+---
+
+## Run Tests Locally (Optional)
+
+If you want to run tests without Docker:
+
+```bash
+pip install -r requirements.txt
+pytest
+```
+
+---
 
 ## 👩‍💻 Author
 
