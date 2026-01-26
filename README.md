@@ -11,7 +11,7 @@ Deployed using Docker and Railway.
 
 This project demonstrates an end-to-end ML engineering workflow, not just model training.
 
-**Live Demo**
+## Live Demo
 
 API Base URL: https://housing-price-ml-api-production.up.railway.app
 
@@ -19,7 +19,9 @@ Swagger UI: https://housing-price-ml-api-production.up.railway.app/docs
 
 Use /v1/predict to test predictions directly in the browser
 
-**What This Project Demonstrates**
+
+
+## What This Project Demonstrates
 
 | Area             | Implemented                     |
 | ---------------- | ------------------------------- |
@@ -35,7 +37,7 @@ Use /v1/predict to test predictions directly in the browser
 | Deployment       | Docker + Railway                |
 
 
-**System Architecture**
+## System Architecture
 
 Client (Swagger / curl / frontend)
             |
@@ -55,7 +57,7 @@ Client (Swagger / curl / frontend)
             GitHub Actions (Weekly Retraining)
 
 
-**Features**
+## Features
 
 ✅ Prediction API
 - Endpoint: POST /v1/predict
@@ -106,14 +108,14 @@ Compares recent prediction feature means with training baseline using z-score:
 
 **Flags drift when z-score > 3**
 
-**Redis Caching Strategy**
+## Redis Caching Strategy
 
 - Input JSON is hashed using SHA-256
 - Same input → same cache key
 - Cached predictions expire after 10 minutes
 - Improves latency and reduces model compute
 
-**Prediction Logging**
+## Prediction Logging
 
 Every request is logged to CSV:
 
@@ -131,7 +133,7 @@ This creates a real production-style dataset for:
 - drift analysis
 - retraining
 
-**Automated Weekly Retraining**
+## Automated Weekly Retraining
 
 A GitHub Actions workflow runs weekly:
 
@@ -151,12 +153,12 @@ This simulates a continuous ML lifecycle.
 
 [![Weekly Retraining](https://github.com/KaushalyaDasanayake/housing-price-ml-api/actions/workflows/retrain.yml/badge.svg)](https://github.com/KaushalyaDasanayake/housing-price-ml-api/actions/workflows/retrain.yml)
 
-**Testing & CI**
+## Testing & CI
 
-**Local Tests**
+## Local Tests
 - pytest
 
-**CI Pipeline**
+## CI Pipeline
 - Runs on every push to main
 - Executes FastAPI endpoint tests
 
@@ -177,7 +179,7 @@ http://localhost:8000/docs
 
 Redis and API run as separate containers.
 
-**Environment Variables**
+## Environment Variables
 
 | Variable        | Purpose                       |
 | --------------- | ----------------------------- |
@@ -191,7 +193,7 @@ Example:
 PRED_LOG_PATH=/app/data/predictions.csv
 MODEL_VERSION=v1
 
-**Tech Stack**
+## Tech Stack
 
 - FastAPI
 - scikit-learn
@@ -200,7 +202,7 @@ MODEL_VERSION=v1
 - GitHub Actions
 - Pandas, NumPy
 
-**Limitations & Future Improvements**
+## Limitations & Future Improvements
 
 - No real ground-truth labels in production → accuracy cannot be measured live
 - Drift detection is statistical only (mean/std), not model performance based
