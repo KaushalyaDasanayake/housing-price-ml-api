@@ -214,8 +214,7 @@ Future upgrades:
 
 **Author**
 
-Kaushalya Rathnayake
-ML Engineering Portfolio Project
+Kaushalya Rathnayake | ML Engineering Portfolio Project
 
 
 ```md
