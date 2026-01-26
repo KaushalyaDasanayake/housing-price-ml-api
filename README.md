@@ -1,5 +1,10 @@
 # Housing Price Prediction — ML API (Production Style)
+
 [![Deployed on Railway](https://img.shields.io/badge/Deployed%20on-Railway-7B3FE4?logo=railway&logoColor=white)](https://housing-price-ml-api-production.up.railway.app)
+[![Swagger](https://img.shields.io/badge/API-Docs-green)](https://housing-price-ml-api-production.up.railway.app/docs)
+[![CI - FastAPI Tests](https://github.com/KaushalyaDasanayake/housing-price-ml-api/actions/workflows/ci.yml/badge.svg)](https://github.com/KaushalyaDasanayake/housing-price-ml-api/actions/workflows/ci.yml)
+[![Weekly Retraining](https://github.com/KaushalyaDasanayake/housing-price-ml-api/actions/workflows/retrain.yml/badge.svg)](https://github.com/KaushalyaDasanayake/housing-price-ml-api/actions/workflows/retrain.yml)
+
 
 Production-style Machine Learning API built with FastAPI, featuring Redis caching, request logging, data drift detection, and automated weekly retraining via GitHub Actions.
 Deployed using Docker and Railway.
@@ -144,6 +149,8 @@ This simulates a continuous ML lifecycle.
 - Workflow file:
 .github/workflows/retrain.yml
 
+[![Weekly Retraining](https://github.com/KaushalyaDasanayake/housing-price-ml-api/actions/workflows/retrain.yml/badge.svg)](https://github.com/KaushalyaDasanayake/housing-price-ml-api/actions/workflows/retrain.yml)
+
 **Testing & CI**
 
 **Local Tests**
@@ -156,6 +163,8 @@ This simulates a continuous ML lifecycle.
 Workflow:
 
 .github/workflows/ci.yml
+
+[![CI - FastAPI Tests](https://github.com/KaushalyaDasanayake/housing-price-ml-api/actions/workflows/ci.yml/badge.svg)](https://github.com/KaushalyaDasanayake/housing-price-ml-api/actions/workflows/ci.yml)
 
 
 **Run Locally with Docker**
@@ -207,3 +216,11 @@ Future upgrades:
 
 Kaushalya Rathnayake
 ML Engineering Portfolio Project
+
+
+```md
+## Why This Project Matters
+
+- Simulates production ML system
+- Includes monitoring and retraining
+- Uses CI/CD and cloud deployment
