@@ -3,42 +3,51 @@
 Production-style Machine Learning API built with FastAPI, featuring Redis caching, request logging, data drift detection, and automated weekly retraining via GitHub Actions.
 Deployed using Docker and Railway.
 
+This project demonstrates an end-to-end ML engineering workflow, not just model training.
+
 **Live Demo**
 
 API Base URL: https://housing-price-ml-api-production.up.railway.app
+
 Swagger UI: https://housing-price-ml-api-production.up.railway.app/docs
 
 Use /v1/predict to test predictions directly in the browser
 
 **What This Project Demonstrates**
 
-This project simulates a real ML engineering lifecycle:
-- Model training & feature scaling
-- Model serving via REST API
-- Prediction caching (Redis)
-- Request & prediction logging
-- Monitoring prediction statistics
-- Detecting data drift
-- Automated retraining pipeline
+| Area             | Implemented                     |
+| ---------------- | ------------------------------- |
+| Model Training   | scikit-learn Linear Regression  |
+| API Serving      | FastAPI                         |
+| Input Validation | Pydantic                        |
+| Feature Safety   | Fixed feature order enforcement |
+| Caching          | Redis                           |
+| Logging          | CSV prediction logs             |
+| Monitoring       | Stats & drift endpoints         |
+| CI Testing       | GitHub Actions + pytest         |
+| Retraining       | Weekly GitHub Actions pipeline  |
+| Deployment       | Docker + Railway                |
+
 
 **System Architecture**
 
-Client
-  │
-  ▼
-FastAPI API
-  │
-  ├─▶ Redis Cache (prediction cache)
-  │
-  ├─▶ ML Model (scikit-learn)
-  │
-  └─▶ CSV Logs (prediction history)
-              │
-              ▼
-        Drift Detection Endpoint
-              │
-              ▼
-        GitHub Actions (Weekly Retraining)
+Client (Swagger / curl / frontend)
+            |
+            v
+     FastAPI Application
+            |
+            +--> Redis Cache (prediction cache)
+            |
+            +--> ML Model (scikit-learn)
+            |
+            +--> CSV Logs (prediction history)
+                        |
+                        v
+                 Drift Detection (/drift)
+                        |
+                        v
+            GitHub Actions (Weekly Retraining)
+
 
 **Features**
 
@@ -91,6 +100,30 @@ Compares recent prediction feature means with training baseline using z-score:
 
 **Flags drift when z-score > 3**
 
+**Redis Caching Strategy**
+
+- Input JSON is hashed using SHA-256
+- Same input → same cache key
+- Cached predictions expire after 10 minutes
+- Improves latency and reduces model compute
+
+**Prediction Logging**
+
+Every request is logged to CSV:
+
+- timestamp
+- request id
+- model version
+- input features
+- predicted price
+- latency
+- cache hit flag
+- error (if any)
+
+This creates a real production-style dataset for:
+- monitoring
+- drift analysis
+- retraining
 
 **Automated Weekly Retraining**
 
