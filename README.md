@@ -1,4 +1,5 @@
 # Housing Price Prediction — ML API (Production Style)
+[![Deployed on Railway](https://img.shields.io/badge/Deployed%20on-Railway-7B3FE4?logo=railway&logoColor=white)](https://housing-price-ml-api-production.up.railway.app)
 
 Production-style Machine Learning API built with FastAPI, featuring Redis caching, request logging, data drift detection, and automated weekly retraining via GitHub Actions.
 Deployed using Docker and Railway.
