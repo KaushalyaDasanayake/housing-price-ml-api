@@ -21,9 +21,9 @@ just model training.
 ## 🚀 Live Demo
 
 -   **API Base URL:**
-    https://housing-price-ml-api-production.up.railway.app\
+    https://housing-price-ml-api-production.up.railway.app
 -   **Swagger UI:**
-    https://housing-price-ml-api-production.up.railway.app/docs\
+    https://housing-price-ml-api-production.up.railway.app/docs
 -   Test predictions using: `POST /v1/predict`
 
 ------------------------------------------------------------------------
